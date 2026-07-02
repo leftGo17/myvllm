@@ -6,7 +6,8 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 
 # Add src to Python path
-sys.path.insert(0, str(Path(__file__).parent / "src"))
+# 因为通过uv sync已经把myvllm注册到了，所以这里不需要再添加
+# sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from myvllm.models.qwen3 import Qwen3ForCausalLM
 from myvllm.engine.llm_engine import LLMEngine as LLM

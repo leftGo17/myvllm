@@ -1254,13 +1254,6 @@ dependencies = [
     { name = "xxhash" },
 ]
 
-[package.optional-dependencies]
-dev = [
-    { name = "black" },
-    { name = "isort" },
-    { name = "pytest" },
-]
-
 [package.dev-dependencies]
 dev = [
     { name = "black" },
@@ -1270,15 +1263,11 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "black", marker = "extra == 'dev'" },
-    { name = "isort", marker = "extra == 'dev'" },
-    { name = "pytest", marker = "extra == 'dev'" },
     { name = "torch" },
     { name = "transformers" },
     { name = "vllm", specifier = ">=0.15.0" },
     { name = "xxhash" },
 ]
-provides-extras = ["dev"]
 
 [package.metadata.requires-dev]
 dev = [
