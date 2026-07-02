@@ -5,13 +5,10 @@ import os
 # 关闭 Transformers 的普通日志/警告，只打印最后的模型回复。
 logging.set_verbosity_error()
 
-# 本地模型目录。os.path.expanduser 会把 "~" 展开成当前用户的 home 目录。
 model_name = os.path.expanduser("~/hf/Qwen3-0.6B")
 
-# tokenizer: 负责把文本转成 token id，也负责把模型输出的 token id 解码回文本。
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-# model: 因果语言模型，用来根据输入 token 继续生成后面的 token。
 model = AutoModelForCausalLM.from_pretrained(model_name)
 
 # messages 是聊天格式输入。
@@ -43,30 +40,10 @@ inputs = tokenizer.apply_chat_template(
 
 # 把输入 Tensor 移动到模型所在设备。当前默认通常是 CPU；如果模型在 GPU，这里也会跟随到 GPU。
 inputs = {name: tensor.to(model.device) for name, tensor in inputs.items()}
-# print(inputs)
-
-#   所以在你的代码里：
-
-#   outputs = model.generate(
-#       **inputs,
-#       max_new_tokens=64,
-#       do_sample=False,
-#       pad_token_id=tokenizer.eos_token_id,
-#   )
-
-#   等价于：
-
-#   outputs = model.generate(
-#       input_ids=inputs["input_ids"],
-#       attention_mask=inputs["attention_mask"],
-#       max_new_tokens=64,
-#       do_sample=False,
-#       pad_token_id=tokenizer.eos_token_id,
-#   )
+print(inputs)
 outputs = model.generate(
     # **inputs 会展开 input_ids、attention_mask 等模型需要的输入字段。
     **inputs,
-    # max_new_tokens: 最多新生成多少个 token，不包含输入本身。
     max_new_tokens=64,
     # do_sample=False:
     # 使用确定性生成，通常等价于每一步选择概率最高的 token。
