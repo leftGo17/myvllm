@@ -1,15 +1,12 @@
-import sys, os
-from pathlib import Path
-import torch.distributed as dist
-
-from transformers import AutoTokenizer, AutoModelForCausalLM
-import torch
+from transformers import AutoTokenizer
 
 # Add src to Python path
 # 因为通过uv sync已经把myvllm注册到了，所以这里不需要再添加
 # sys.path.insert(0, str(Path(__file__).parent / "src"))
+# import myvllm
+# from myvllm import sampling_parameters
+# from myvllm import layers
 
-from myvllm.models.qwen3 import Qwen3ForCausalLM
 from myvllm.engine.llm_engine import LLMEngine as LLM
 from myvllm.sampling_parameters import SamplingParams
 
