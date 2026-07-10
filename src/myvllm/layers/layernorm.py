@@ -1,10 +1,14 @@
 import torch
-import time 
+import time
+
 
 class LayerNorm(torch.nn.Module):
     def __init__(self, gamma: torch.Tensor, eps: float = 1e-5):
         super().__init__()
         # Use nn.Parameter to make gamma learnable and loadable from checkpoints
+        # 其实也可直接用gamma，因为gamma属于tensor,默认没有计算图，但是为了兼容性，这里还是用detach().clone()来避免修改原gamma
+        # gamma是一个可学习参数，形状是[hidden_size]
+        # rmsnorml本身不改变形状
         self.weight = torch.nn.Parameter(gamma.detach().clone())
         self.eps = eps
 
@@ -19,33 +23,38 @@ class LayerNorm(torch.nn.Module):
 
         variance = x.pow(2).mean(dim=-1, keepdim=True) + self.eps
         sqrt_variance = variance.sqrt()
-        x_norm = (x / sqrt_variance * self.weight)
+        x_norm = x / sqrt_variance * self.weight
 
         return x_norm
 
-    def residual_rms_forward(self, x: torch.Tensor, residual: torch.Tensor) -> torch.Tensor:
+    def residual_rms_forward(
+        self, x: torch.Tensor, residual: torch.Tensor
+    ) -> torch.Tensor:
         x = x + residual
         return self.rms_forward(x), x
 
-    def forward(self, x: torch.Tensor, residual: torch.Tensor | None = None) -> torch.Tensor:
+    def forward(
+        self, x: torch.Tensor, residual: torch.Tensor | None = None
+    ) -> torch.Tensor:
         if residual is not None:
             return self.residual_rms_forward(x, residual)
         else:
             return self.rms_forward(x)
 
+
 if __name__ == "__main__":
     # Example usage
-    x = torch.randn(8,4000,8000).cuda()
+    x = torch.randn(8, 4000, 8000).cuda()
     gamma = torch.full((8000,), 0.5, device="cuda", dtype=x.dtype)
     layer = LayerNorm(gamma=gamma).cuda()
-    residual = torch.full_like(x,fill_value=1)
+    residual = torch.full_like(x, fill_value=1)
 
-    for _ in range(10): # Warm-up iterations
+    for _ in range(10):  # Warm-up iterations
         _ = layer(x)
-    
+
     # Without residuals
-    times = [] 
-    for _ in range(100): # Timing iterations
+    times = []
+    for _ in range(100):  # Timing iterations
         torch.cuda.synchronize()
         start_time = time.time()
         _ = layer(x)
@@ -53,17 +62,20 @@ if __name__ == "__main__":
         end_time = time.time()
         times.append(end_time - start_time)
     avg_time = sum(times) / len(times)
-    print(f"[Without residuals] Average inference time over 100 runs: {avg_time * 1000:.4f} ms")
+    print(
+        f"[Without residuals] Average inference time over 100 runs: {avg_time * 1000:.4f} ms"
+    )
 
     # With residuals
     times.clear()
-    for _ in range(100): # Timing iterations
+    for _ in range(100):  # Timing iterations
         torch.cuda.synchronize()
         start_time = time.time()
-        _ = layer(x,residual)
+        _ = layer(x, residual)
         torch.cuda.synchronize()
         end_time = time.time()
         times.append(end_time - start_time)
     avg_time = sum(times) / len(times)
-    print(f"[With residuals] Average inference time over 100 runs: {avg_time * 1000:.4f} ms")
-    
+    print(
+        f"[With residuals] Average inference time over 100 runs: {avg_time * 1000:.4f} ms"
+    )
